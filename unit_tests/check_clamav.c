@@ -1704,8 +1704,8 @@ START_TEST(test_hash_md5_sha1)
      * by this change; verify it still returns correct MD5/SHA1 digests for the
      * "abc" vectors. These algorithms must remain available through the
      * private non-FIPS context even when the default context enables FIPS. */
-    static const uint8_t abc[]                    = {'a', 'b', 'c'};
-    static const uint8_t md5_abc[MD5_HASH_SIZE]   = {
+    static const uint8_t abc[]                  = {'a', 'b', 'c'};
+    static const uint8_t md5_abc[MD5_HASH_SIZE] = {
         0x90, 0x01, 0x50, 0x98, 0x3c, 0xd2, 0x4f, 0xb0,
         0xd6, 0x96, 0x3f, 0x7d, 0x28, 0xe1, 0x7f, 0x72};
     static const uint8_t sha1_abc[SHA1_HASH_SIZE] = {
