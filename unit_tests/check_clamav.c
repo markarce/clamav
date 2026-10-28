@@ -1698,6 +1698,41 @@ START_TEST(test_sha2_256)
 }
 END_TEST
 
+START_TEST(test_asn1_gettimet)
+{
+    /* cl_ASN1_GetTimeT() has always returned the month one lower than the input (March -> tm_mon 1). */
+    static const struct {
+        const char *in;
+        int mon;
+    } cases[] = {
+        {"250315123456Z", 1},
+        {"251015123456Z", 8},
+        {"20250315123456Z", 1},
+        {"20251015123456Z", 8},
+    };
+    size_t i;
+
+    for (i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+        ASN1_TIME *timeobj = ASN1_TIME_new();
+        struct tm *tm;
+
+        ck_assert_msg(timeobj && ASN1_TIME_set_string(timeobj, cases[i].in), "could not create ASN1_TIME %s", cases[i].in);
+        tm = cl_ASN1_GetTimeT(timeobj);
+        ck_assert_msg(tm != NULL, "cl_ASN1_GetTimeT(%s) returned NULL", cases[i].in);
+        ck_assert_msg(tm->tm_year == 125 && tm->tm_mon == cases[i].mon && tm->tm_mday == 15 &&
+                          tm->tm_hour == 12 && tm->tm_min == 34 && tm->tm_sec == 56,
+                      "cl_ASN1_GetTimeT(%s) returned an unexpected time", cases[i].in);
+        ck_assert_msg(ASN1_STRING_length(timeobj) == (int)strlen(cases[i].in) &&
+                          !memcmp(ASN1_STRING_get0_data(timeobj), cases[i].in, strlen(cases[i].in)),
+                      "cl_ASN1_GetTimeT(%s) modified its input", cases[i].in);
+        free(tm);
+        ASN1_TIME_free(timeobj);
+    }
+
+    ck_assert_msg(cl_ASN1_GetTimeT(NULL) == NULL, "cl_ASN1_GetTimeT(NULL) should return NULL");
+}
+END_TEST
+
 START_TEST(test_hash_md5_sha1)
 {
     /* The incremental cl_hash_* API is routed through the shared EVP_MD cache
@@ -2214,6 +2249,7 @@ static Suite *test_cli_suite(void)
     suite_add_tcase(s, tc_cli_dsig);
     tcase_add_loop_test(tc_cli_dsig, test_cli_dsig, 0, dsig_tests_cnt);
     tcase_add_test(tc_cli_dsig, test_sha2_256);
+    tcase_add_test(tc_cli_dsig, test_asn1_gettimet);
     tcase_add_test(tc_cli_dsig, test_hash_md5_sha1);
 #ifdef CL_THREAD_SAFE
     tcase_add_test(tc_cli_dsig, test_hash_cache_threadsafe);
